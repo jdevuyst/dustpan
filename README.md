@@ -6,7 +6,7 @@ Dustpan is a small library that adds optional garbage collection to Swift.
 
 One of the features that sets the [Swift programming language](https://swift.org) apart from other languages is its use of [Automatic Reference Counting (ARC)](https://docs.swift.org/swift-book/LanguageGuide/AutomaticReferenceCounting.html). Many other modern programming languages use [Garbage Collection (GC)](https://en.wikipedia.org/wiki/Garbage_collection_(computer_science)) instead.
 
-Both ARC and GC are forms of automatic memory management. Memory that is no longer reachable from the running application is automatically freed. However, ARC has a limitation in that it cannot free [object graphs](https://stackoverflow.com/questions/2046761/what-is-object-graph-in-java) that contain [strong reference cycles](https://docs.swift.org/swift-book/LanguageGuide/AutomaticReferenceCounting.html#ID52). In ARC, such cycles must be broken manually before they become unreachable.
+Both ARC and GC are forms of automatic memory management. Memory that is no longer reachable from the running application is automatically freed. However, ARC has a limitation in that it cannot free [object graphs](https://stackoverflow.com/questions/2046761/what-is-object-graph-in-java) that contain [strong reference cycles](https://docs.swift.org/swift-book/LanguageGuide/AutomaticReferenceCounting.html#ID52). In ARC, such cycles must be broken manually.
 
 Whereas ARC has its advantages (e.g. deterministic performance), there are problem domains where GC is very handy. Consider, for example, the case where you want to [transpile](https://www.stevefenton.co.uk/2012/11/compiling-vs-transpiling/) a garbage collected programming language to Swift.
 
@@ -48,7 +48,7 @@ class MyApp {
 }
 ```
 
-There are three things you need to do to adopt Dustpan:
+There are three steps to adopting Dustpan:
 
 1. Use a `Ref(root: true)` annotation to flag object graphs that should be garbage collected.
 2. Inside the garbage collected object graphs, use a `Ref` annotation to break strong reference cycles.

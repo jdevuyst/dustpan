@@ -5,31 +5,11 @@ fileprivate func dup<T>(_ x: T) -> (T, T) {
     return (x, x)
 }
 
-fileprivate var nodeCount = 0
-
-fileprivate protocol NodeProtocol {
-    var next: [NodeProtocol] { get set }
-}
-
-fileprivate class Node: NodeProtocol {
-    @Ref
-    var next: [NodeProtocol] = []
-    init() { nodeCount += 1 }
-    deinit { nodeCount -= 1 }
-}
-
-fileprivate class RootNode: NodeProtocol {
-    @Ref(root: true)
-    var next: [NodeProtocol] = []
-    init() { nodeCount += 1 }
-    deinit { nodeCount -= 1 }
-}
-
 final class DustpanTests: XCTestCase {
     func testCycles() {
         gc()
         XCTAssertEqual(gcInfo().total, 0)
-        XCTAssertEqual(nodeCount, 0)
+        XCTAssertEqual(Cnt.total, 0)
 
         let n1 = RootNode()
         let n2 = Node()
@@ -73,7 +53,7 @@ final class DustpanTests: XCTestCase {
     func testDealloc() {
         gc()
         XCTAssertEqual(gcInfo().total, 0)
-        XCTAssertEqual(nodeCount, 0)
+        XCTAssertEqual(Cnt.total, 0)
 
         var n1: NodeProtocol! = RootNode()
         var n2: NodeProtocol! = Node()
@@ -86,13 +66,13 @@ final class DustpanTests: XCTestCase {
         n3 = nil
         gc()
         XCTAssertEqual(gcInfo().total, 3)
-        XCTAssertEqual(nodeCount, 3)
+        XCTAssertEqual(Cnt.total, 3)
 
         n1 = nil
-        XCTAssertEqual(nodeCount, 2)
+        XCTAssertEqual(Cnt.total, 2)
         gc()
         XCTAssertEqual(gcInfo().total, 0)
-        XCTAssertEqual(nodeCount, 0)
+        XCTAssertEqual(Cnt.total, 0)
     }
 
     func testExample() {
@@ -106,13 +86,16 @@ final class DustpanTests: XCTestCase {
         XCTAssertEqual(gcInfo().total, 5)
         app.makeCyclicList()
         app.makeCyclicList()
+        XCTAssertEqual(Cnt.total, 12)
         gc()
+        XCTAssertEqual(Cnt.total, 4)
         XCTAssertEqual(gcInfo().total, 5)
         XCTAssertEqual(gcInfo().pinned, 1)
         XCTAssert(analyzeObjectGraph(app).isCyclic)
 
         app.list = nil
         gc()
+        XCTAssertEqual(Cnt.total, 0)
         XCTAssertEqual(gcInfo().total, 1)
         XCTAssertEqual(gcInfo().pinned, 1)
         XCTAssertFalse(analyzeObjectGraph(app).isCyclic)
