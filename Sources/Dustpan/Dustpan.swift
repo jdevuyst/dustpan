@@ -39,7 +39,7 @@ fileprivate final class PrimRef {
     }
 
     /// All `PrimRef` instances.
-    private static var all: [Identifier: PrimRef] = [:]
+    private static var all: [PrimRef] = []
 
     /// All 'pinned' `PrimRef` instances.
     private static var pinned: [Identifier: PrimRef] = [:]
@@ -54,7 +54,7 @@ fileprivate final class PrimRef {
 
     init(wrappedValue: Any) {
         self.wrappedValue = wrappedValue
-        PrimRef.all[identifier] = self
+        PrimRef.all.append(self)
     }
 
     /// Whether or not this reference is a 'pinned' reference.
@@ -68,6 +68,8 @@ fileprivate final class PrimRef {
         set { PrimRef.pinned[identifier] = newValue ? self : nil }
     }
 
+    private var isMarked = false
+
     static func gcInfo() -> GCInfo {
         return GCInfo(total: all.count,
                       pinned: pinned.count)
@@ -77,24 +79,25 @@ fileprivate final class PrimRef {
     ///
     /// The world must be stopped while this function is running.
     static func gc() {
-        var seen: Set<PrimRef.Identifier> = Set(PrimRef.pinned.keys)
         var todo: [PrimRef] = Array(PrimRef.pinned.values)
 
-        while let known = todo.popLast() {
-            findClosest(origin: known) { (found: PrimRef) in
-                if !seen.contains(found.identifier) {
-                    seen.insert(found.identifier)
-                    todo.append(found)
-                }
+        // Mark
+        while let ref = todo.popLast() {
+            if !ref.isMarked {
+                ref.isMarked = true
+                findClosest(origin: ref, onFound: {todo.append($0)})
             }
         }
 
-        PrimRef.all = PrimRef.all.filter { (ident, ref) in
-            let keep = seen.contains(ident)
-            if !keep {
+        // Sweep
+        PrimRef.all.removeAll { ref in
+            if ref.isMarked {
+                ref.isMarked = false
+                return false
+            } else {
                 ref.wrappedValue = nil
+                return true
             }
-            return keep
         }
     }
 }
